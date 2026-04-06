@@ -1,6 +1,5 @@
 ---
-general:
-  productiveBranch: "main"
+productiveBranch: "main"
 
 stages:
   build:
