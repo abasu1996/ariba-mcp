@@ -1,0 +1,7 @@
+general:
+  buildTool: "custom"
+  productiveBranch: "main"
+
+stages:
+  Build:
+    run: true
