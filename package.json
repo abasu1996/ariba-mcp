@@ -1,7 +1,7 @@
 {
   "private": true,
   "scripts": {
-    "ci:bootstrap": "PIP_DISABLE_PIP_VERSION_CHECK=1 python3 -m pip install -r requirements.txt pytest pytest-asyncio ruff",
+    "ci:bootstrap": "python3 -m ensurepip --upgrade && PIP_DISABLE_PIP_VERSION_CHECK=1 python3 -m pip install -r requirements.txt pytest pytest-asyncio ruff",
     "ci:build": "npm run ci:bootstrap && python3 -m compileall src",
     "ci:lint": "npm run ci:bootstrap && python3 -m ruff check src tests",
     "ci:test": "npm run ci:bootstrap && PYTHONPATH=src python3 -m pytest"
