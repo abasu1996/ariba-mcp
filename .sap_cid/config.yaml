@@ -5,6 +5,7 @@ general:
 stages:
   build:
     buildTool: "npm"
+    buildToolVersion: "N20"
     buildDescriptor: "package.json"
     npmScript: "ci:build"
 
@@ -15,7 +16,7 @@ stages:
 
   release:
     cfDeploy:
-      appName: "ariba-mcp-ci"
+      appName: "aribamcpci"
       strategy: "default"
       apiEndpoint: "https://api.cf.eu10-005.hana.ondemand.com"
       org: "BrainBox Consulting BV_BrainboxConsultingIG"
