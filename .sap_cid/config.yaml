@@ -1,6 +1,3 @@
----
-productiveBranch: "main"
-
 stages:
   build:
     buildTool: "npm"
