@@ -1,7 +1,23 @@
+---
 general:
-  buildTool: "custom"
   productiveBranch: "main"
 
 stages:
   build:
-    run: true
+    buildTool: "npm"
+    buildDescriptor: "package.json"
+    npmScript: "ci:build"
+
+  additionalTests:
+    npmTests:
+      buildDescriptor: "package.json"
+      npmScript: "ci:test"
+
+  release:
+    cfDeploy:
+      appName: "ariba-mcp-ci"
+      strategy: "default"
+      apiEndpoint: "https://api.cf.eu10-005.hana.ondemand.com"
+      org: "BrainBox Consulting BV_BrainboxConsultingIG"
+      space: "dev"
+      credential: "cfcreds"
