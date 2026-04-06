@@ -3,5 +3,5 @@ general:
   productiveBranch: "main"
 
 stages:
-  Build:
+  build:
     run: true
