@@ -8,7 +8,7 @@ SAP Ariba Developer Portal and distributes the .env file.
 from functools import lru_cache
 
 from pydantic_settings import BaseSettings
-
+##More details
 
 class AribaSettings(BaseSettings):
     """SAP Ariba connection settings.
