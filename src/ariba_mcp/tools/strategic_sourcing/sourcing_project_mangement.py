@@ -54,7 +54,8 @@ def _make_auth_ms() -> DirectAuthClient:
 
 def register(mcp: FastMCP, client: AribaClient) -> None:
 
-    _auth = _make_auth_ms()
+    _auth = _make_auth()
+    _auth_ms = _make_auth_ms()
 
     @mcp.tool(
         name="ariba_list_sourcing_projects",
@@ -73,9 +74,22 @@ def register(mcp: FastMCP, client: AribaClient) -> None:
         password_adapter: str | None = None,
         filter_expr: str | None = None,
         page_token: str | None = None,
+        from_date: str | None = None,
+        to_date: str | None = None,
         ctx: Context | None = None,
     ) -> str:
         try:
+            if not from_date or not to_date:
+                return json.dumps({
+                    "need_input": {
+                        "type": "date_range",
+                        "title": "Select Invoice Date Range",
+                        "fields": [
+                            {"name": "from_date", "label": "From Date"},
+                            {"name": "to_date", "label": "To Date"}
+                        ]
+                    }
+                })
             if not user or not password_adapter or not filter_expr:
                 if ctx is None:
                     return json.dumps(
@@ -113,7 +127,7 @@ def register(mcp: FastMCP, client: AribaClient) -> None:
                         f"createdDate le '{elicitation.data.created_date_to}'"
                     )
 
-            headers = await _auth.get_headers()
+            headers = await _auth_ms.get_headers()
             params: dict = {
                 "realm": client.realm_ms,
                 "user": user,
@@ -148,10 +162,23 @@ def register(mcp: FastMCP, client: AribaClient) -> None:
     async def get_sourcing_project(
         project_id: str | None = None,
         user: str | None = None,
+        from_date: str | None = None,
+        to_date: str | None = None,
         password_adapter: str | None = None,
         ctx: Context | None = None,
     ) -> str:
         try:
+            if not from_date or not to_date:
+                        return json.dumps({
+                            "need_input": {
+                        "type": "date_range",
+                        "title": "Select Invoice Date Range",
+                        "fields": [
+                            {"name": "from_date", "label": "From Date"},
+                            {"name": "to_date", "label": "To Date"}
+                        ]
+                    }
+                })
             if not project_id or not user or not password_adapter:
                 if ctx is None:
                     return json.dumps(
@@ -185,7 +212,7 @@ def register(mcp: FastMCP, client: AribaClient) -> None:
                 user = user or elicitation.data.user
                 password_adapter = password_adapter or elicitation.data.password_adapter
 
-            headers = await _auth.get_headers()
+            headers = await _auth_ms.get_headers()
             async with httpx.AsyncClient() as http:
                 resp = await http.get(
                     f"{BASE_URL_MS}/projects/{project_id}",
@@ -237,3 +264,58 @@ def register(mcp: FastMCP, client: AribaClient) -> None:
             return json.dumps(resp.json(), default=str)
         except Exception as e:
             return handle_ariba_error(e)
+
+
+    @mcp.tool(
+        name="ariba_update_sourcing_project",
+        description=(
+            "Update an existing sourcing project in Ariba. "
+            "Requires user and password_adapter for user-context auth. "
+            "Pass project_data as a JSON string with project details "
+            "(title, projectType, description, owner, etc.)."
+        ),
+        annotations={"readOnlyHint": False, "destructiveHint": True, "idempotentHint": False, "openWorldHint": True},
+    )
+    async def update_sourcing_project(
+        project_id: str,
+        project_data: str,
+        realm: str,
+        user: str,
+        password_adapter: str
+    ):
+        ARIBA_REALM = client.realm_ms
+        project_id = project_id
+        data = json.loads(project_data)
+
+        try:
+            if not project_id or data is None:
+                return json.dumps(
+                    {
+                        "error": True,
+                        "message": "project_id and data are required.",
+                    }
+                )
+            else:
+                headers = await _auth_ms.get_headers()
+                headers["Content-Type"] = "application/json"
+                async with httpx.AsyncClient() as http:
+                    resp = await http.put(
+                        f"{BASE_URL_MS}/projects/{project_id}",
+                        headers=headers,
+                        params={
+                            "realm": ARIBA_REALM,
+                            "user": user,
+                            "passwordAdapter": data.get("password_adapter"),
+                            "project_id": project_id
+                        },
+                        json=data.get("update_fields", {}),
+                        timeout=60,
+                    )
+                    resp.raise_for_status()
+        except Exception as e:
+            return json.dumps(
+                {
+                    "error": True,
+                    "message": f"Invalid input: {str(e)}",
+                }
+            )
