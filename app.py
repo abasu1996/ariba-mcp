@@ -22,7 +22,30 @@ def _http_path() -> str:
     return path
 
 
-app = mcp.http_app(path=_http_path())
+class RootRedirect:
+    """Redirect the bare app route to the configured MCP endpoint."""
+
+    def __init__(self, wrapped_app, location: str) -> None:
+        self._wrapped_app = wrapped_app
+        self._location = location
+
+    async def __call__(self, scope, receive, send) -> None:
+        if scope["type"] == "http" and scope.get("path") in ("", "/"):
+            await send(
+                {
+                    "type": "http.response.start",
+                    "status": 307,
+                    "headers": [(b"location", self._location.encode("ascii"))],
+                }
+            )
+            await send({"type": "http.response.body", "body": b""})
+            return
+
+        await self._wrapped_app(scope, receive, send)
+
+
+_mcp_path = _http_path()
+app = RootRedirect(mcp.http_app(path=_mcp_path), _mcp_path)
 
 
 if __name__ == "__main__":
